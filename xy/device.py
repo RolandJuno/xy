@@ -1,16 +1,19 @@
+# Changes for HP 7475A Plotter via RS-232
+# You will need a special cable to connect your plotter.
+# http://music.columbia.edu/cmc/chiplotle/manual/_static/SerialPlotterCable_Chiplotle.pdf
 import serial
 import time
 
-PORT = '/dev/tty.wchusbserial640'
-BAUD = 115200
+PORT = '/dev/tty.usbserial-FTBRY656'
+BAUD = 9600
 
-UP = 10
-DOWN = 40
+UP = 0
+DOWN = 50
 
 class Device(object):
 
     def __init__(self, port=PORT, baud=BAUD, up=UP, down=DOWN, verbose=False):
-        self.serial = serial.Serial(port, baud) if port else None
+        self.serial = serial.Serial(port, baud, dsrdtr=True, rtscts=True) if port else None
         self.up = up
         self.down = down
         self.verbose = verbose
@@ -28,21 +31,26 @@ class Device(object):
         if self.verbose:
             print line
         if self.serial:
-            self.serial.write('%s\n' % line)
+            self.serial.write(line),
+        self.serial.flush()
+        return
         response = self.read()
         if self.verbose:
             print response
 
     def home(self):
-        self.write('G28')
+        self.write(';IN;SP1;VS10;PU;') #VS10 will slow it down some (35 is normal)
+        self.write(chr(27)+'.R')
 
     def move(self, x, y):
-        x = 'X%s' % x
-        y = 'Y%s' % y
-        self.write('G1', x, y)
+        # swap x and y since y runs along the short edge of the page for 11 x 17 "ledger" paper
+        self.write(y, ',', x, ',')
 
     def pen(self, position):
-        self.write('M1', position)
+        if position is UP:
+            self.write(';PU')
+        elif position is DOWN:
+            self.write(';PD')
 
     def pen_up(self):
         self.pen(self.up)
@@ -56,11 +64,9 @@ class Device(object):
         self.pen(self.up if up is None else up)
         self.move(*points[0])
         self.pen(self.down if down is None else down)
-        time.sleep(0.15)
         for point in points:
             self.move(*point)
         self.pen(up)
-        time.sleep(0.15)
 
     def gcode(self, g):
         for line in g.lines:
