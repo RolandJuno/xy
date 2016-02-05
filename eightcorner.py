@@ -12,7 +12,6 @@ def main():
     padding = sqrsize * .2
 
     for y in range (1, rows+1):
-        randsum = randsum + (y * step)
         for x in range (1, columns+1):
             path = []
             for z in range (0, 8):
