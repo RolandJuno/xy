@@ -38,7 +38,13 @@ def main():
     drawing = xy.Drawing(paths).scale_to_fit(10365, 16640, 2000)
     centereddrawing = drawing.translate((10365-drawing.width)/2,(16640-drawing.height)/2)
     #drawing = drawing.sort_paths_greedy()
+    #plot
     xy.draw(centereddrawing)
+    
+    #write PNG
+    drawing = xy.Drawing(paths)
+    drawing.render().write_to_png('schotter.png')
+
 
 if __name__ == '__main__':
     main()
